@@ -5,7 +5,37 @@
 namespace libchain {
 
 template<typename Functor>
-struct Apply {
+struct ApplyNullary {
+	template<typename P>
+	using Signature = void();
+
+	template<typename P, typename Next>
+	struct Chain;
+	
+	template<typename... Args, typename Next>
+	struct Chain<void(Args...), Next> {
+		Chain(const ApplyNullary &bp, Next &&next)
+		: _functor(bp._functor), _next(std::move(next)) { }
+
+		void operator() (Args &&... args) {
+			_functor(std::forward<Args>(args)...);
+			_next();
+		}
+
+	private:
+		Functor _functor;
+		Next _next;
+	};
+
+	ApplyNullary(Functor functor)
+	: _functor(std::move(functor)) { }
+
+private:
+	Functor _functor;
+};
+
+template<typename Functor>
+struct ApplyUnary {
 private:
 	template<typename P>
 	struct ResolveSignature;
@@ -24,7 +54,7 @@ public:
 	
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		Chain(const Apply &bp, Next &&next)
+		Chain(const ApplyUnary &bp, Next &&next)
 		: _functor(bp._functor), _next(std::move(next)) { }
 
 		void operator() (Args &&... args) {
@@ -36,16 +66,27 @@ public:
 		Next _next;
 	};
 
-	Apply(Functor functor)
+	ApplyUnary(Functor functor)
 	: _functor(std::move(functor)) { }
 
 private:
 	Functor _functor;
 };
 
+struct Nullary { };
+struct Unary { };
+
+constexpr Nullary nullary;
+constexpr Unary unary;
+
 template<typename Functor>
-Apply<Functor> apply(Functor functor) {
-	return Apply<Functor>(std::move(functor));
+ApplyNullary<Functor> apply(Functor functor, Nullary tag) {
+	return ApplyNullary<Functor>(std::move(functor));
+}
+
+template<typename Functor>
+ApplyUnary<Functor> apply(Functor functor, Unary tag) {
+	return ApplyUnary<Functor>(std::move(functor));
 }
 
 } // namespace libchain

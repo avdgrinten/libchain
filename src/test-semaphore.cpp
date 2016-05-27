@@ -11,11 +11,11 @@ int main() {
 
 	auto chainable = libchain::sequence()
 	& libchain::makeUniqueAsyncLock(semaphore)
-	& libchain::apply([] (auto lock) -> int {
-		return 0;
-	});
+	& libchain::apply([] (auto lock) {
+		std::cout << "Lock acquired" << std::endl;
+	}, libchain::nullary);
 	
-	run(chainable, [] (int) {
+	run(chainable, [] () {
 		std::cout << "Finally" << std::endl;
 	});
 }

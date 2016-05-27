@@ -8,15 +8,15 @@
 
 int main() {
 	auto chainable = libchain::sequence()
-	& libchain::await<void(int)>([] (auto cb) {
-		cb(21);
-	})
-	& libchain::apply([] (int n) -> int {
-		return n * 2;
-	});
+	& libchain::apply([] () -> int {
+		return 42;
+	}, libchain::unary)
+	& libchain::apply([] (int n) {
+		std::cout << "The answer is " << n << std::endl;
+	}, libchain::nullary);
 	
-	run(chainable, [] (int result) {
-		std::cout << "Finally the result is " << result << std::endl;
+	run(chainable, [] () {
+		std::cout << "Finally" << std::endl;
 	});
 }
 

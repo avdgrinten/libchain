@@ -7,6 +7,7 @@
 #include <queue>
 #include <mutex>
 
+#include <libchain/apply.hpp>
 #include <libchain/await.hpp>
 #include <libchain/dsl-sequence.hpp>
 
@@ -58,7 +59,7 @@ auto makeUniqueAsyncLock(R &resource) {
 	& resource.lockAsync()
 	& apply([&resource] () -> auto {
 		return UniqueAsyncLock<R>(resource, std::adopt_lock);
-	});
+	}, unary);
 }
 
 struct Semaphore {
