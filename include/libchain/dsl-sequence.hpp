@@ -1,0 +1,58 @@
+
+#ifndef LIBCHAIN_DSL_SEQUENCE_HPP
+#define LIBCHAIN_DSL_SEQUENCE_HPP
+
+#include <libchain/then.hpp>
+
+namespace libchain {
+
+template<typename Delegate>
+struct Sequence {
+	template<typename P>
+	using Signature = typename Delegate::template Signature<P>;
+
+	template<typename P, typename Next>
+	struct Chain;
+
+	template<typename... Args, typename Next>
+	struct Chain<void(Args...), Next> {
+		using DelegateChain = typename Delegate::template Chain<void(Args...), Next>;
+
+		Chain(const Sequence &bp, Next &&next)
+		: _delegateChain(bp._delegate, std::move(next)) { }
+
+		void operator() (Args... args) {
+			_delegateChain(std::forward<Args>(args)...);
+		}
+
+	private:
+		DelegateChain _delegateChain;
+	};
+
+	Sequence(Delegate delegate)
+	: _delegate(std::move(delegate)) { }
+
+	template<typename Follow>
+	auto operator& (Follow follow) {
+		return then(*this, std::move(follow));
+	}
+
+private:
+	Delegate _delegate;
+};
+
+struct EmptySequence {
+	template<typename First>
+	auto operator& (First first) {
+		return Sequence<First>(first);
+	}
+};
+
+auto sequence() {
+	return EmptySequence();
+}
+
+} // namespace libchain
+
+#endif // LIBCHAIN_DSL_SEQUENCE_HPP
+
