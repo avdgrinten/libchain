@@ -12,13 +12,15 @@ echo; exit $$status
 endef
 
 .PHONY: tests
-tests: bin/test-await bin/test-then bin/test-contextify \
-		bin/test-compose
+tests: bin/test-apply bin/test-await bin/test-then bin/test-contextify \
+		bin/test-compose bin/test-semaphore
 	@echo
+	$(call runtest,./bin/test-apply)
 	$(call runtest,./bin/test-await)
 	$(call runtest,./bin/test-then)
 	$(call runtest,./bin/test-contextify)
 	$(call runtest,./bin/test-compose)
+	$(call runtest,./bin/test-semaphore)
 
 .PHONY: clean
 clean:
