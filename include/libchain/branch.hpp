@@ -24,7 +24,7 @@ public:
 			Resume(Chain *chain)
 			: _chain(chain) { }
 
-			void operator() (Results... results) {
+			void operator() (Results &&... results) {
 				_chain->_next(std::forward<Results>(results)...);
 			}
 
@@ -43,6 +43,9 @@ public:
 				_elseChain(bp._elseChainable, Resume<ElseSignature>(this)),
 				_next(std::move(next)) { }
 		
+		Chain(Chain &&other) = delete;
+		Chain &operator= (Chain &&other) = delete;
+
 		void operator() (bool check) {
 			if(check) {
 				_thenChain();

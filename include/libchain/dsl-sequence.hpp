@@ -21,7 +21,7 @@ struct Sequence {
 		Chain(const Sequence &bp, Next &&next)
 		: _delegateChain(bp._delegate, std::move(next)) { }
 
-		void operator() (Args... args) {
+		void operator() (Args &&... args) {
 			_delegateChain(std::forward<Args>(args)...);
 		}
 
@@ -34,7 +34,8 @@ struct Sequence {
 
 	template<typename Follow>
 	auto operator& (Follow follow) {
-		return then(*this, std::move(follow));
+		using Combined = Then<Sequence, Follow>;
+		return Sequence<Combined>(then(*this, std::move(follow)));
 	}
 
 private:

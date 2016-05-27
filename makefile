@@ -30,6 +30,7 @@ clean:
 obj bin:
 	mkdir $@
 
+obj/%.o: CXXFLAGS += -g
 obj/%.o: src/%.cpp | obj
 	$(CXX) -c -o $@ $(CXXFLAGS) -MD $<
 

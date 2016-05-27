@@ -2,6 +2,8 @@
 #ifndef LIBCHAIN_CLOSURE_HPP
 #define LIBCHAIN_CLOSURE_HPP
 
+#include <utility>
+
 namespace libchain {
 
 template<typename Chainable, typename Finally>
@@ -14,7 +16,7 @@ struct Closure {
 		Complete(Closure *closure)
 		: _closure(closure) { }
 
-		void operator() (Results... results) {
+		void operator() (Results &&... results) {
 			_closure->finally(std::forward<Results>(results)...);
 			delete _closure;
 		}
