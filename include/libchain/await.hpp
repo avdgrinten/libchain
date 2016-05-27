@@ -39,19 +39,21 @@ struct Await<void(Results...), Functor> {
 	
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		Chain(const Await &bp, Next &&next)
-		: _functor(bp._functor), _continuation(std::move(next)) { }
+		template<typename... E>
+		Chain(const Await &bp, E &&... emplace)
+		: _functor(bp._functor), _continuation(std::forward<E>(emplace)...) { }
 
-		void operator() (Args... args) {
+		void operator() (Args &&... args) {
 			_functor(Callback<void(Results...)>(&_continuation), std::forward<Args>(args)...);
 		}
 
 	private:
 		struct Continuation : public Callback<void(Results...)>::Interface {
-			Continuation(Next &&next)
-			: _next(std::move(next)) { }
+			template<typename... E>
+			Continuation(E &&... emplace)
+			: _next(std::forward<E>(emplace)...) { }
 			
-			void callback(Results... results) override {
+			void callback(Results &&... results) override {
 				_next(std::forward<Results>(results)...);
 			}
 		

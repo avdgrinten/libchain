@@ -18,8 +18,9 @@ struct Sequence {
 	struct Chain<void(Args...), Next> {
 		using DelegateChain = typename Delegate::template Chain<void(Args...), Next>;
 
-		Chain(const Sequence &bp, Next &&next)
-		: _delegateChain(bp._delegate, std::move(next)) { }
+		template<typename... E>
+		Chain(const Sequence &bp, E &&... emplace)
+		: _delegateChain(bp._delegate, std::forward<E>(emplace)...) { }
 
 		void operator() (Args &&... args) {
 			_delegateChain(std::forward<Args>(args)...);

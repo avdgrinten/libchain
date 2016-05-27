@@ -40,7 +40,7 @@ public:
 			Resume(Chain *chain)
 			: _chain(chain) { }
 
-			void operator() (Results... results) {
+			void operator() (Results &&... results) {
 				_chain->_next(std::forward<Results>(results)...);
 			}
 
@@ -49,10 +49,11 @@ public:
 		};
 
 	public:
-		Chain(const ComposeDynamic &bp, Next &&next)
-		: _functor(bp._functor), _next(std::move(next)) { }
+		template<typename... E>
+		Chain(const ComposeDynamic &bp, E &&... emplace)
+		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
 		
-		void operator() (Args... args) {
+		void operator() (Args &&... args) {
 			auto chainable = _functor(std::forward<Args>(args)...);
 			run(chainable, Resume<ComposedSignature>(this));
 		}
@@ -94,8 +95,9 @@ public:
 		using ComposedChain = typename ComposedChainable::template Chain<void(), Next>;
 	
 	public:
-		Chain(const ComposeOnce &bp, Next &&next)
-		: _constructData(bp._functor, std::move(next)),
+		template<typename... E>
+		Chain(const ComposeOnce &bp, E &&... emplace)
+		: _constructData(bp._functor, std::forward<E>(emplace)...),
 				_hasConstructData(true), _hasComposedChain(false) { }
 	
 		~Chain() {
@@ -105,7 +107,7 @@ public:
 				_composedChain.~ComposedChain();
 		}
 
-		void operator() (Args... args) {
+		void operator() (Args &&... args) {
 			assert(_hasConstructData);
 
 			// destruct the construction data to make room for the chainable
@@ -124,8 +126,9 @@ public:
 
 	private:
 		struct ConstructData {
-			ConstructData(Functor functor, Next &&next)
-			: functor(std::move(functor)), next(std::move(next)) { }
+			template<typename... E>
+			ConstructData(Functor functor, E &&... emplace)
+			: functor(std::move(functor)), next(std::forward<E>(emplace)...) { }
 
 			Functor functor;
 			Next next;

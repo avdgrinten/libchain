@@ -22,10 +22,11 @@ public:
 		using FollowChain = typename Follow::template Chain<FirstSignature<void(Args...)>, Next>;
 		using FirstChain = typename First::template Chain<void(Args...), FollowChain>;
 
-		Chain(const Then &bp, Next &&next)
-		: _firstChain(bp._first, FollowChain(bp._follow, std::move(next))) { }
+		template<typename... E>
+		Chain(const Then &bp, E &&... emplace)
+		: _firstChain(bp._first, bp._follow, std::forward<E>(emplace)...) { }
 
-		void operator() (Args... args) {
+		void operator() (Args &&... args) {
 			_firstChain(std::forward<Args>(args)...);
 		}
 

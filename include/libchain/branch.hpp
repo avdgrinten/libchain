@@ -38,10 +38,11 @@ public:
 		using ElseChain = typename ElseChainable::template Chain<void(), Resume<ElseSignature>>;
 
 	public:
-		Chain(const Branch &bp, Next &&next)
-		: _thenChain(bp._thenChainable, Resume<ThenSignature>(this)),
-				_elseChain(bp._elseChainable, Resume<ElseSignature>(this)),
-				_next(std::move(next)) { }
+		template<typename... E>
+		Chain(const Branch &bp, E &&... emplace)
+		: _thenChain(bp._thenChainable, this),
+				_elseChain(bp._elseChainable, this),
+				_next(std::forward<E>(emplace)...) { }
 		
 		Chain(Chain &&other) = delete;
 		Chain &operator= (Chain &&other) = delete;

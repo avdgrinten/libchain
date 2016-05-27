@@ -14,8 +14,9 @@ struct ApplyNullary {
 	
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		Chain(const ApplyNullary &bp, Next &&next)
-		: _functor(bp._functor), _next(std::move(next)) { }
+		template<typename... E>
+		Chain(const ApplyNullary &bp, E &&... emplace)
+		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
 
 		void operator() (Args &&... args) {
 			_functor(std::forward<Args>(args)...);
@@ -54,8 +55,9 @@ public:
 	
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		Chain(const ApplyUnary &bp, Next &&next)
-		: _functor(bp._functor), _next(std::move(next)) { }
+		template<typename... E>
+		Chain(const ApplyUnary &bp, E &&...emplace)
+		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
 
 		void operator() (Args &&... args) {
 			_next(_functor(std::forward<Args>(args)...));

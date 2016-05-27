@@ -29,7 +29,7 @@ struct Closure {
 	using Continuation = typename Chainable::template Chain<void(), Complete<Signature>>;
 
 	Closure(Chainable chainable, Finally finally)
-	: continuation(std::move(chainable), Complete<Signature>(this)), finally(std::move(finally)) { }
+	: continuation(std::move(chainable), this), finally(std::move(finally)) { }
 
 	Continuation continuation;
 	Finally finally;
