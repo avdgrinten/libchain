@@ -8,7 +8,7 @@ template<typename ThenChainable, typename ElseChainable>
 struct Branch {
 public:
 	template<typename P>
-	using Signature = typename ThenChainable::template Signature<P>;
+	using Signature = typename ThenChainable::template Signature<void()>;
 
 	template<typename P, typename Next>
 	struct Chain;
