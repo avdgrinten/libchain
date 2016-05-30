@@ -14,12 +14,20 @@ struct Callback<void(Results...)> {
 	struct Interface {
 		virtual void callback(Results... results) = 0;
 	};
+	
+	static void invoke(Interface *implementation, Results... results) {
+		implementation->callback(results...);
+	}
 
 	Callback(Interface *implementation)
 	: _implementation(implementation) { }
 
-	void operator() (Results... results) {
+	void operator() (Results &&... results) {
 		_implementation->callback(std::forward<Results>(results)...);
+	}
+
+	Interface *implementation() {
+		return _implementation;
 	}
 
 private:
@@ -53,7 +61,7 @@ struct Await<void(Results...), Functor> {
 			Continuation(E &&... emplace)
 			: _next(std::forward<E>(emplace)...) { }
 			
-			void callback(Results &&... results) override {
+			void callback(Results... results) override {
 				_next(std::forward<Results>(results)...);
 			}
 		

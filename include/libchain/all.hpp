@@ -9,6 +9,7 @@
 #include <libchain/branch.hpp>
 #include <libchain/compose.hpp>
 #include <libchain/contextify.hpp>
+#include <libchain/repeat.hpp>
 #include <libchain/then.hpp>
 
 #include <libchain/dsl-sequence.hpp>
