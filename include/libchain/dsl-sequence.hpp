@@ -50,7 +50,7 @@ struct EmptySequence {
 	}
 };
 
-auto sequence() {
+inline auto sequence() {
 	return EmptySequence();
 }
 
