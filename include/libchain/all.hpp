@@ -14,6 +14,7 @@
 #include <libchain/dsl-sequence.hpp>
 
 #include <libchain/async-semaphore.hpp>
+#include <libchain/async-ready-queue.hpp>
 
 #endif // LIBCHAIN_ALL_HPP
 
