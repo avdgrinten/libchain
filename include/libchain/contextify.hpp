@@ -12,7 +12,7 @@ private:
 	
 	template<typename... Args>
 	struct ResolveSignature<void(Args...)> {
-		using Type = typename std::result_of_t<Functor(T &)>::template Signature<void(Args...)>;
+		using Type = typename std::result_of_t<Functor(T *)>::template Signature<void(Args...)>;
 	};
 
 public:
@@ -24,13 +24,13 @@ public:
 
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		using ContextChainable = std::result_of_t<Functor(T &)>;
+		using ContextChainable = std::result_of_t<Functor(T *)>;
 		using ContextChain = typename ContextChainable::template Chain<void(Args...), Next>;
 
 		template<typename... E>
 		Chain(const Contextify &bp, E &&... emplace)
 		: _context(bp._context),
-				_contextChain(bp._functor(_context), std::forward<E>(emplace)...) { }
+				_contextChain(bp._functor(&_context), std::forward<E>(emplace)...) { }
 		
 		void operator() (Args... args) {
 			_contextChain(std::forward<Args>(args)...);

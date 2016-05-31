@@ -6,9 +6,9 @@
 #include <libchain/run.hpp>
 
 int main() {
-	auto chainable = libchain::contextify([] (int answer) {
+	auto chainable = libchain::contextify([] (int *answer) {
 		return libchain::await<void()>([answer] (libchain::Callback<void()> cb) {
-			std::cout << "The answer is " << answer << std::endl;
+			std::cout << "The answer is " << *answer << std::endl;
 			cb();
 		});
 	}, 42);
