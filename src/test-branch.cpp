@@ -8,10 +8,10 @@
 
 int main() {
 	auto chainable = libchain::sequence()
-	& libchain::apply([] () -> bool {
+	+ libchain::apply([] () -> bool {
 		return false;
 	})
-	& libchain::branch(
+	+ libchain::branch(
 		libchain::apply([] () {
 			std::cout << "The condition was true" << std::endl;
 		}),

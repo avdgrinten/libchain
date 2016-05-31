@@ -34,7 +34,7 @@ struct Sequence {
 	: _delegate(std::move(delegate)) { }
 
 	template<typename Follow>
-	auto operator& (Follow follow) {
+	auto operator+ (Follow follow) {
 		using Combined = Then<Sequence, Follow>;
 		return Sequence<Combined>(then(*this, std::move(follow)));
 	}
@@ -45,7 +45,7 @@ private:
 
 struct EmptySequence {
 	template<typename First>
-	auto operator& (First first) {
+	auto operator+ (First first) {
 		return Sequence<First>(first);
 	}
 };

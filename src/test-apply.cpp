@@ -8,10 +8,10 @@
 
 int main() {
 	auto chainable = libchain::sequence()
-	& libchain::apply([] () -> int {
+	+ libchain::apply([] () -> int {
 		return 42;
 	})
-	& libchain::apply([] (int n) {
+	+ libchain::apply([] (int n) {
 		std::cout << "The answer is " << n << std::endl;
 	});
 	

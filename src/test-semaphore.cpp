@@ -10,8 +10,8 @@ int main() {
 	libchain::Semaphore semaphore(4);
 
 	auto chainable = libchain::sequence()
-	& libchain::makeUniqueAsyncLock(semaphore)
-	& libchain::apply([] (auto lock) {
+	+ libchain::makeUniqueAsyncLock(semaphore)
+	+ libchain::apply([] (auto lock) {
 		std::cout << "Lock acquired" << std::endl;
 	});
 	
