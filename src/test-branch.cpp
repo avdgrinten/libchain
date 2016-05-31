@@ -10,15 +10,15 @@ int main() {
 	auto chainable = libchain::sequence()
 	& libchain::apply([] () -> bool {
 		return false;
-	}, libchain::unary)
+	})
 	& libchain::branch(
 		libchain::apply([] () {
 			std::cout << "The condition was true" << std::endl;
-		}, libchain::nullary),
+		}),
 		
 		libchain::apply([] () {
 			std::cout << "The condition was false" << std::endl;
-		}, libchain::nullary)
+		})
 	);
 	
 	run(chainable, [] () {

@@ -4,18 +4,51 @@
 
 namespace libchain {
 
-template<typename Functor>
-struct ApplyNullary {
-	template<typename P>
-	using Signature = void();
+template<typename T>
+struct SwitchOnResult {
+	static constexpr bool nullary = false;
+	using Signature = void(T);
+};
 
-	template<typename P, typename Next>
+template<>
+struct SwitchOnResult<void> {
+	static constexpr bool nullary = true;
+	using Signature = void();
+};
+
+template<typename Functor>
+struct ApplyUnary {
+private:
+	template<typename P>
+	struct Resolve;
+	
+	template<typename... Args>
+	struct Resolve<void(Args...)> {
+		using Result = std::result_of_t<Functor(Args...)>;
+
+		static constexpr bool nullary = SwitchOnResult<Result>::nullary;
+		using Signature = typename SwitchOnResult<Result>::Signature;
+	};
+
+public:
+	template<typename P>
+	using Signature = typename Resolve<P>::Signature;
+
+private:
+	template<typename... Args>
+	using EnableNullary = std::enable_if_t<Resolve<void(Args...)>::nullary>;
+
+	template<typename... Args>
+	using EnableUnary = std::enable_if_t<!Resolve<void(Args...)>::nullary>;
+
+public:
+	template<typename P, typename Next, typename = void>
 	struct Chain;
 	
 	template<typename... Args, typename Next>
-	struct Chain<void(Args...), Next> {
+	struct Chain<void(Args...), Next, EnableNullary<Args...>> {
 		template<typename... E>
-		Chain(const ApplyNullary &bp, E &&... emplace)
+		Chain(const ApplyUnary &bp, E &&...emplace)
 		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
 
 		void operator() (Args &&... args) {
@@ -27,34 +60,9 @@ struct ApplyNullary {
 		Functor _functor;
 		Next _next;
 	};
-
-	ApplyNullary(Functor functor)
-	: _functor(std::move(functor)) { }
-
-private:
-	Functor _functor;
-};
-
-template<typename Functor>
-struct ApplyUnary {
-private:
-	template<typename P>
-	struct ResolveSignature;
-	
-	template<typename... Args>
-	struct ResolveSignature<void(Args...)> {
-		using Type = void(std::result_of_t<Functor(Args...)>);
-	};
-
-public:
-	template<typename P>
-	using Signature = typename ResolveSignature<P>::Type;
-
-	template<typename P, typename Next>
-	struct Chain;
 	
 	template<typename... Args, typename Next>
-	struct Chain<void(Args...), Next> {
+	struct Chain<void(Args...), Next, EnableUnary<Args...>> {
 		template<typename... E>
 		Chain(const ApplyUnary &bp, E &&...emplace)
 		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
@@ -75,19 +83,8 @@ private:
 	Functor _functor;
 };
 
-struct Nullary { };
-struct Unary { };
-
-constexpr Nullary nullary;
-constexpr Unary unary;
-
 template<typename Functor>
-ApplyNullary<Functor> apply(Functor functor, Nullary tag) {
-	return ApplyNullary<Functor>(std::move(functor));
-}
-
-template<typename Functor>
-ApplyUnary<Functor> apply(Functor functor, Unary tag) {
+ApplyUnary<Functor> apply(Functor functor) {
 	return ApplyUnary<Functor>(std::move(functor));
 }
 

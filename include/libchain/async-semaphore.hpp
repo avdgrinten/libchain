@@ -59,7 +59,7 @@ auto makeUniqueAsyncLock(R &resource) {
 	& resource.lockAsync()
 	& apply([&resource] () -> auto {
 		return UniqueAsyncLock<R>(resource, std::adopt_lock);
-	}, unary);
+	});
 }
 
 struct Semaphore {

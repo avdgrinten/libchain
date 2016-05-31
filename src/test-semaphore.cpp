@@ -13,7 +13,7 @@ int main() {
 	& libchain::makeUniqueAsyncLock(semaphore)
 	& libchain::apply([] (auto lock) {
 		std::cout << "Lock acquired" << std::endl;
-	}, libchain::nullary);
+	});
 	
 	run(chainable, [] () {
 		std::cout << "Finally" << std::endl;
