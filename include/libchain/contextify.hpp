@@ -2,9 +2,12 @@
 #ifndef LIBCHAIN_CONTEXTIFY_HPP
 #define LIBCHAIN_CONTEXTIFY_HPP
 
+#include <utility>
+#include <tuple>
+
 namespace libchain {
 
-template<typename Functor, typename T>
+template<typename Functor, typename... T>
 struct Contextify {
 private:
 	template<typename P>
@@ -12,7 +15,7 @@ private:
 	
 	template<typename... Args>
 	struct ResolveSignature<void(Args...)> {
-		using Type = typename std::result_of_t<Functor(T *)>::template Signature<void(Args...)>;
+		using Type = typename std::result_of_t<Functor(T *...)>::template Signature<void(Args...)>;
 	};
 
 public:
@@ -24,34 +27,38 @@ public:
 
 	template<typename... Args, typename Next>
 	struct Chain<void(Args...), Next> {
-		using ContextChainable = std::result_of_t<Functor(T *)>;
+		using ContextChainable = std::result_of_t<Functor(T *...)>;
 		using ContextChain = typename ContextChainable::template Chain<void(Args...), Next>;
 
 		template<typename... E>
 		Chain(const Contextify &bp, E &&... emplace)
-		: _context(bp._context),
-				_contextChain(bp._functor(&_context), std::forward<E>(emplace)...) { }
-		
+		: Chain(std::index_sequence_for<T...>(), bp, std::forward<E>(emplace)...) { }
+
 		void operator() (Args... args) {
 			_contextChain(std::forward<Args>(args)...);
 		}
 
 	private:
-		T _context;
+		template<size_t... I, typename... E>
+		Chain(std::index_sequence<I...>, const Contextify &bp, E &&... emplace)
+		: _context(bp._context), _contextChain(bp._functor(&std::get<I>(_context)...),
+				std::forward<E>(emplace)...) { }
+
+		std::tuple<T...> _context;
 		ContextChain _contextChain;
 	};
 
-	Contextify(Functor functor, T context)
-	: _functor(functor), _context(context) { }
+	Contextify(Functor functor, T... contexts)
+	: _functor(functor), _context(std::move(contexts)...) { }
 
 private:
 	Functor _functor;
-	T _context;
+	std::tuple<T...> _context;
 };
 
-template<typename Functor, typename T>
-auto contextify(Functor functor, T context) {
-	return Contextify<Functor, T>(std::move(functor), std::move(context));
+template<typename Functor, typename... T>
+auto contextify(Functor functor, T... contexts) {
+	return Contextify<Functor, T...>(std::move(functor), std::move(contexts)...);
 }
 
 } // namespace libchain

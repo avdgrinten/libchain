@@ -6,12 +6,13 @@
 #include <libchain/run.hpp>
 
 int main() {
-	auto chainable = libchain::contextify([] (int *answer) {
-		return libchain::await<void()>([answer] (libchain::Callback<void()> cb) {
-			std::cout << "The answer is " << *answer << std::endl;
+	auto chainable = libchain::contextify([] (int *answer, int *half) {
+		return libchain::await<void()>([answer, half] (libchain::Callback<void()> cb) {
+			std::cout << "The answer is " << *answer
+					<< "; half of that is " << *half << std::endl;
 			cb();
 		});
-	}, 42);
+	}, 42, 21);
 
 	run(chainable, [] () {
 		std::cout << "Finally" << std::endl;
