@@ -2,6 +2,8 @@
 #ifndef LIBCHAIN_REPEAT_HPP
 #define LIBCHAIN_REPEAT_HPP
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename Delegate>
@@ -58,6 +60,10 @@ public:
 private:
 	Delegate _delegate;
 };
+
+template<typename Delegate>
+struct CanSequence<Repeat<Delegate>>
+: public std::true_type { };
 
 template<typename Delegate>
 Repeat<Delegate> repeat(Delegate delegate) {

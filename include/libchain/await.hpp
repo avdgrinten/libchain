@@ -4,6 +4,8 @@
 
 #include <utility>
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename S>
@@ -81,7 +83,11 @@ private:
 };
 
 template<typename S, typename Functor>
-auto await(Functor functor) {
+struct CanSequence<Await<S, Functor>>
+: public std::true_type { };
+
+template<typename S, typename Functor>
+Await<S, Functor> await(Functor functor) {
 	return Await<S, Functor>(std::move(functor));
 }
 

@@ -12,8 +12,6 @@
 #include <libchain/repeat.hpp>
 #include <libchain/then.hpp>
 
-#include <libchain/dsl-sequence.hpp>
-
 #include <libchain/async-semaphore.hpp>
 #include <libchain/async-ready-queue.hpp>
 

@@ -3,12 +3,12 @@
 
 #include <libchain/apply.hpp>
 #include <libchain/branch.hpp>
-#include <libchain/dsl-sequence.hpp>
+#include <libchain/then.hpp>
 #include <libchain/run.hpp>
 
 int main() {
-	auto chainable = libchain::sequence()
-	+ libchain::apply([] () -> bool {
+	auto chainable
+	= libchain::apply([] () -> bool {
 		return false;
 	})
 	+ libchain::branch(

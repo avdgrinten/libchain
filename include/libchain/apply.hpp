@@ -2,6 +2,8 @@
 #ifndef LIBCHAIN_APPLY_HPP
 #define LIBCHAIN_APPLY_HPP
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename T>
@@ -82,6 +84,10 @@ public:
 private:
 	Functor _functor;
 };
+
+template<typename Functor>
+struct CanSequence<ApplyUnary<Functor>>
+: public std::true_type { };
 
 template<typename Functor>
 ApplyUnary<Functor> apply(Functor functor) {

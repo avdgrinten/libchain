@@ -4,6 +4,7 @@
 
 #include <assert.h>
 
+#include <libchain/common.hpp>
 #include <libchain/run.hpp>
 
 namespace libchain {
@@ -69,6 +70,10 @@ public:
 private:
 	Functor _functor;
 };
+
+template<typename Functor>
+struct CanSequence<ComposeDynamic<Functor>>
+: public std::true_type { };
 
 template<typename Functor>
 struct ComposeOnce {
@@ -149,14 +154,16 @@ private:
 	Functor _functor;
 };
 
-struct Dynamic { };
+template<typename Functor>
+struct CanSequence<ComposeOnce<Functor>>
+: public std::true_type { };
+
 struct Once { };
 
-constexpr Dynamic dynamic;
 constexpr Once once;
 
 template<typename Functor>
-auto compose(Functor functor, Dynamic tag) {
+auto compose(Functor functor) {
 	return ComposeDynamic<Functor>(std::move(functor));
 }
 

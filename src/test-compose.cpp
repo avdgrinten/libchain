@@ -11,7 +11,7 @@ int main() {
 			std::cout << "In composed chain" << std::endl;
 			cb();
 		});
-	}, libchain::dynamic);
+	});
 
 	run(chainable, [] () {
 		std::cout << "Finally" << std::endl;

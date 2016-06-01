@@ -9,7 +9,7 @@
 
 #include <libchain/apply.hpp>
 #include <libchain/await.hpp>
-#include <libchain/dsl-sequence.hpp>
+#include <libchain/then.hpp>
 
 namespace libchain {
 
@@ -55,8 +55,7 @@ private:
 
 template<typename R>
 auto makeUniqueAsyncLock(R &resource) {
-	return sequence()
-	+ resource.lockAsync()
+	return resource.lockAsync()
 	+ apply([&resource] () -> auto {
 		return UniqueAsyncLock<R>(resource, std::adopt_lock);
 	});

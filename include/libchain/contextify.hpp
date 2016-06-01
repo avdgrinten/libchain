@@ -5,6 +5,8 @@
 #include <utility>
 #include <tuple>
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename Functor, typename... T>
@@ -55,6 +57,10 @@ private:
 	Functor _functor;
 	std::tuple<T...> _context;
 };
+
+template<typename Functor, typename... T>
+struct CanSequence<Contextify<Functor, T...>>
+: public std::true_type { };
 
 template<typename Functor, typename... T>
 auto contextify(Functor functor, T... contexts) {

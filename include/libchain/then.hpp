@@ -2,6 +2,8 @@
 #ifndef LIBCHAIN_THEN_HPP
 #define LIBCHAIN_THEN_HPP
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename First, typename Follow>
@@ -43,7 +45,20 @@ private:
 };
 
 template<typename First, typename Follow>
-auto then(First first, Follow follow) {
+struct CanSequence<Then<First, Follow>>
+: public std::true_type { };
+
+template<typename T>
+using EnableSequence = std::enable_if_t<CanSequence<T>::value>;
+
+template<typename First, typename Follow,
+		typename = EnableSequence<First>>
+Then<First, Follow> operator+ (First first, Follow follow) {
+	return Then<First, Follow>(std::move(first), std::move(follow));
+}
+
+template<typename First, typename Follow>
+Then<First, Follow> then(First first, Follow follow) {
 	return Then<First, Follow>(std::move(first), std::move(follow));
 }
 

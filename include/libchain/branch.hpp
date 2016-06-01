@@ -2,6 +2,8 @@
 #ifndef LIBCHAIN_BRANCH_HPP
 #define LIBCHAIN_BRANCH_HPP
 
+#include <libchain/common.hpp>
+
 namespace libchain {
 
 template<typename ThenChainable, typename ElseChainable>
@@ -69,6 +71,10 @@ private:
 	ThenChainable _thenChainable;
 	ElseChainable _elseChainable;
 };
+
+template<typename ThenChainable, typename ElseChainable>
+struct CanSequence<Branch<ThenChainable, ElseChainable>>
+: public std::true_type { };
 
 template<typename ThenChainable, typename ElseChainable>
 Branch<ThenChainable, ElseChainable>

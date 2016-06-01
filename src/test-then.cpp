@@ -2,12 +2,12 @@
 #include <iostream>
 
 #include <libchain/await.hpp>
-#include <libchain/dsl-sequence.hpp>
+#include <libchain/then.hpp>
 #include <libchain/run.hpp>
 
 int main() {
-	auto chainable = libchain::sequence()
-	+ libchain::await<void()>([] (libchain::Callback<void()> cb) {
+	auto chainable
+	= libchain::await<void()>([] (libchain::Callback<void()> cb) {
 		std::cout << "First" << std::endl;
 		cb();
 	})

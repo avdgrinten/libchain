@@ -2,15 +2,15 @@
 #include <iostream>
 
 #include <libchain/async-semaphore.hpp>
-#include <libchain/dsl-sequence.hpp>
+#include <libchain/then.hpp>
 #include <libchain/apply.hpp>
 #include <libchain/run.hpp>
 
 int main() {
 	libchain::Semaphore semaphore(4);
 
-	auto chainable = libchain::sequence()
-	+ libchain::makeUniqueAsyncLock(semaphore)
+	auto chainable
+	= libchain::makeUniqueAsyncLock(semaphore)
 	+ libchain::apply([] (auto lock) {
 		std::cout << "Lock acquired" << std::endl;
 	});
