@@ -6,7 +6,6 @@
 #include <mutex>
 
 #include <libchain/await.hpp>
-#include <libchain/dsl-sequence.hpp>
 
 namespace libchain {
 

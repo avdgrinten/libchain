@@ -36,6 +36,10 @@ public:
 		Chain(const Contextify &bp, E &&... emplace)
 		: Chain(std::index_sequence_for<T...>(), bp, std::forward<E>(emplace)...) { }
 
+		template<typename... E>
+		Chain(Contextify &&bp, E &&... emplace)
+		: Chain(std::index_sequence_for<T...>(), std::move(bp), std::forward<E>(emplace)...) { }
+
 		void operator() (Args... args) {
 			_contextChain(std::forward<Args>(args)...);
 		}
@@ -44,6 +48,11 @@ public:
 		template<size_t... I, typename... E>
 		Chain(std::index_sequence<I...>, const Contextify &bp, E &&... emplace)
 		: _context(bp._context), _contextChain(bp._functor(&std::get<I>(_context)...),
+				std::forward<E>(emplace)...) { }
+
+		template<size_t... I, typename... E>
+		Chain(std::index_sequence<I...>, Contextify &&bp, E &&... emplace)
+		: _context(std::move(bp._context)), _contextChain(bp._functor(&std::get<I>(_context)...),
 				std::forward<E>(emplace)...) { }
 
 		std::tuple<T...> _context;
