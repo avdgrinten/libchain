@@ -17,12 +17,12 @@ int main() {
 		std::cout << "Finally" << std::endl;
 	});
 	
-	auto chainable2 = libchain::compose([] () {
+	auto chainable2 = libchain::dynamic([] () {
 		return libchain::await<void()>([] (libchain::Callback<void()> cb) {
-			std::cout << "In composed chain" << std::endl;
+			std::cout << "In dynamic chain" << std::endl;
 			cb();
 		});
-	}, libchain::once);
+	});
 
 	run(chainable2, [] () {
 		std::cout << "Finally" << std::endl;

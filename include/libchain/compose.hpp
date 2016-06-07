@@ -10,7 +10,105 @@
 namespace libchain {
 
 template<typename Functor>
-struct ComposeDynamic {
+struct Compose {
+private:
+	template<typename P>
+	struct ResolveSignature;
+	
+	template<typename... Args>
+	struct ResolveSignature<void(Args...)> {
+		using Type = typename std::result_of_t<Functor(Args...)>::template Signature<void()>;
+	};
+
+public:
+	template<typename P>
+	using Signature = typename ResolveSignature<P>::Type;
+
+	template<typename P, typename Next>
+	struct Chain;
+
+	template<typename... Args, typename Next>
+	struct Chain<void(Args...), Next> {
+	private:
+		struct Resume {
+			Resume(Chain *chain)
+			: _chain(chain) { }
+
+			template<typename... Results>
+			void operator() (Results &&... results) {
+				assert(_chain->_hasComposedChain);
+				_chain->_composedChain.~ComposedChain();
+				_chain->_hasComposedChain = false;
+
+				_chain->_next(std::forward<Results>(results)...);
+			}
+
+		private:
+			Chain *_chain;
+		};
+
+		using ComposedChainable = std::result_of_t<Functor(Args...)>;
+		using ComposedChain = typename ComposedChainable::template Chain<void(), Resume>;
+	
+	public:
+		template<typename... E>
+		Chain(const Compose &bp, E &&... emplace)
+		: _functor(bp._functor), _next(std::forward<E>(emplace)...),
+				_hasComposedChain(false) { }
+		
+		template<typename... E>
+		Chain(Compose &&bp, E &&... emplace)
+		: _functor(std::move(bp._functor)), _next(std::forward<E>(emplace)...),
+				_hasComposedChain(false) { }
+
+		Chain(const Chain &other) = delete;
+
+		~Chain() {
+			assert(!_hasComposedChain);
+		}
+
+		Chain &operator= (Chain other) = delete;
+
+		void operator() (Args &&... args) {
+			assert(!_hasComposedChain);
+
+			// construct the chain in-place and invoke it
+			auto chainable = _functor(std::forward<Args>(args)...);
+			new (&_composedChain) ComposedChain(std::move(chainable), this);
+			_hasComposedChain = true;
+
+			_composedChain();
+		}
+
+	private:
+		Functor _functor;
+		Next _next;
+
+		union {
+			ComposedChain _composedChain;
+		};
+
+		bool _hasComposedChain;
+	};
+
+	Compose(Functor functor)
+	: _functor(std::move(functor)) { }
+
+private:
+	Functor _functor;
+};
+
+template<typename Functor>
+struct CanSequence<Compose<Functor>>
+: public std::true_type { };
+
+template<typename Functor>
+auto compose(Functor functor) {
+	return Compose<Functor>(std::move(functor));
+}
+
+template<typename Functor>
+struct Dynamic {
 private:
 	template<typename P>
 	struct ResolveSignature;
@@ -51,7 +149,7 @@ public:
 
 	public:
 		template<typename... E>
-		Chain(const ComposeDynamic &bp, E &&... emplace)
+		Chain(const Dynamic &bp, E &&... emplace)
 		: _functor(bp._functor), _next(std::forward<E>(emplace)...) { }
 		
 		void operator() (Args &&... args) {
@@ -64,7 +162,7 @@ public:
 		Next _next;
 	};
 
-	ComposeDynamic(Functor functor)
+	Dynamic(Functor functor)
 	: _functor(std::move(functor)) { }
 
 private:
@@ -72,104 +170,12 @@ private:
 };
 
 template<typename Functor>
-struct CanSequence<ComposeDynamic<Functor>>
+struct CanSequence<Dynamic<Functor>>
 : public std::true_type { };
 
 template<typename Functor>
-struct ComposeOnce {
-private:
-	template<typename P>
-	struct ResolveSignature;
-	
-	template<typename... Args>
-	struct ResolveSignature<void(Args...)> {
-		using Type = typename std::result_of_t<Functor(Args...)>::template Signature<void()>;
-	};
-
-public:
-	template<typename P>
-	using Signature = typename ResolveSignature<P>::Type;
-
-	template<typename P, typename Next>
-	struct Chain;
-
-	template<typename... Args, typename Next>
-	struct Chain<void(Args...), Next> {
-	private:
-		using ComposedChainable = std::result_of_t<Functor(Args...)>;
-		using ComposedChain = typename ComposedChainable::template Chain<void(), Next>;
-	
-	public:
-		template<typename... E>
-		Chain(const ComposeOnce &bp, E &&... emplace)
-		: _constructData(bp._functor, std::forward<E>(emplace)...),
-				_hasConstructData(true), _hasComposedChain(false) { }
-	
-		~Chain() {
-			if(_hasConstructData)
-				_constructData.~ConstructData();
-			if(_hasComposedChain)
-				_composedChain.~ComposedChain();
-		}
-
-		void operator() (Args &&... args) {
-			assert(_hasConstructData);
-
-			// destruct the construction data to make room for the chainable
-			Functor functor = std::move(_constructData.functor);
-			Next next = std::move(_constructData.next);
-			_hasConstructData = false;
-			_constructData.~ConstructData();
-
-			// construct the chain in-place and invoke it
-			auto chainable = functor(std::forward<Args>(args)...);
-			auto chain = new (&_composedChain) ComposedChain(chainable, std::move(next));
-			_hasComposedChain = true;
-
-			(*chain)();
-		}
-
-	private:
-		struct ConstructData {
-			template<typename... E>
-			ConstructData(Functor functor, E &&... emplace)
-			: functor(std::move(functor)), next(std::forward<E>(emplace)...) { }
-
-			Functor functor;
-			Next next;
-		};
-
-		union {
-			ConstructData _constructData;
-			ComposedChain _composedChain;
-		};
-
-		bool _hasConstructData, _hasComposedChain;
-	};
-
-	ComposeOnce(Functor functor)
-	: _functor(std::move(functor)) { }
-
-private:
-	Functor _functor;
-};
-
-template<typename Functor>
-struct CanSequence<ComposeOnce<Functor>>
-: public std::true_type { };
-
-struct Once { };
-
-constexpr Once once;
-
-template<typename Functor>
-auto compose(Functor functor) {
-	return ComposeDynamic<Functor>(std::move(functor));
-}
-
-template<typename Functor>
-auto compose(Functor functor, Once tag) {
-	return ComposeOnce<Functor>(std::move(functor));
+auto dynamic(Functor functor) {
+	return Dynamic<Functor>(std::move(functor));
 }
 
 } // namespace libchain
