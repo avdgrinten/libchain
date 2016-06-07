@@ -27,6 +27,10 @@ public:
 		template<typename... E>
 		Chain(const Then &bp, E &&... emplace)
 		: _firstChain(bp._first, bp._follow, std::forward<E>(emplace)...) { }
+		
+		template<typename... E>
+		Chain(Then &&bp, E &&... emplace)
+		: _firstChain(std::move(bp._first), std::move(bp._follow), std::forward<E>(emplace)...) { }
 
 		void operator() (Args &&... args) {
 			_firstChain(std::forward<Args>(args)...);

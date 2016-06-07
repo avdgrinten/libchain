@@ -56,7 +56,7 @@ public:
 		
 		void operator() (Args &&... args) {
 			auto chainable = _functor(std::forward<Args>(args)...);
-			run(chainable, Resume<ComposedSignature>(this));
+			run(std::move(chainable), Resume<ComposedSignature>(this));
 		}
 
 	private:
