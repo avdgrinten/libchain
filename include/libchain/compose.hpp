@@ -4,12 +4,15 @@
 
 #include <assert.h>
 
+#include <utility>
+#include <tuple>
+
 #include <libchain/common.hpp>
 #include <libchain/run.hpp>
 
 namespace libchain {
 
-template<typename Functor>
+template<typename Functor, typename... T>
 struct Compose {
 private:
 	template<typename P>
@@ -17,7 +20,7 @@ private:
 	
 	template<typename... Args>
 	struct ResolveSignature<void(Args...)> {
-		using Type = typename std::result_of_t<Functor(Args...)>::template Signature<void()>;
+		using Type = typename std::result_of_t<Functor(Args..., T *...)>::template Signature<void()>;
 	};
 
 public:
@@ -47,19 +50,19 @@ public:
 			Chain *_chain;
 		};
 
-		using ComposedChainable = std::result_of_t<Functor(Args...)>;
+		using ComposedChainable = std::result_of_t<Functor(Args..., T *...)>;
 		using ComposedChain = typename ComposedChainable::template Chain<void(), Resume>;
 	
 	public:
 		template<typename... E>
 		Chain(const Compose &bp, E &&... emplace)
-		: _functor(bp._functor), _next(std::forward<E>(emplace)...),
-				_hasComposedChain(false) { }
+		: _functor(bp._functor), _context(bp._context),
+				_next(std::forward<E>(emplace)...), _hasComposedChain(false) { }
 		
 		template<typename... E>
 		Chain(Compose &&bp, E &&... emplace)
-		: _functor(std::move(bp._functor)), _next(std::forward<E>(emplace)...),
-				_hasComposedChain(false) { }
+		: _functor(std::move(bp._functor)), _context(std::move(bp._context)),
+				_next(std::forward<E>(emplace)...), _hasComposedChain(false) { }
 
 		Chain(const Chain &other) = delete;
 
@@ -70,18 +73,24 @@ public:
 		Chain &operator= (Chain other) = delete;
 
 		void operator() (Args &&... args) {
+			invoke(std::index_sequence_for<T...>(), std::forward<Args>(args)...);
+		}
+
+	private:
+		template<size_t... I>
+		void invoke(std::index_sequence<I...>, Args &&... args) {
 			assert(!_hasComposedChain);
 
 			// construct the chain in-place and invoke it
-			auto chainable = _functor(std::forward<Args>(args)...);
+			auto chainable = _functor(std::forward<Args>(args)..., &std::get<I>(_context)...);
 			new (&_composedChain) ComposedChain(std::move(chainable), this);
 			_hasComposedChain = true;
 
 			_composedChain();
 		}
 
-	private:
 		Functor _functor;
+		std::tuple<T...> _context;
 		Next _next;
 
 		union {
@@ -91,20 +100,21 @@ public:
 		bool _hasComposedChain;
 	};
 
-	Compose(Functor functor)
-	: _functor(std::move(functor)) { }
+	Compose(Functor functor, T... contexts)
+	: _functor(std::move(functor)), _context(std::move(contexts)...) { }
 
 private:
 	Functor _functor;
+	std::tuple<T...> _context;
 };
 
 template<typename Functor>
 struct CanSequence<Compose<Functor>>
 : public std::true_type { };
 
-template<typename Functor>
-auto compose(Functor functor) {
-	return Compose<Functor>(std::move(functor));
+template<typename Functor, typename... T>
+Compose<Functor, T...> compose(Functor functor, T... contexts) {
+	return Compose<Functor, T...>(std::move(functor), std::move(contexts)...);
 }
 
 template<typename Functor>
